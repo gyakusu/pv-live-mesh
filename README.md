@@ -1,4 +1,4 @@
-# paraview-cube-height
+# pv-live-mesh
 
 ParaView 用の Python プラグインのサンプルです。読み込んだ VTK メッシュに対して、
 
