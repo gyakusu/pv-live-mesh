@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 同じ ref への新しい push で古い実行をキャンセルする。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies (frozen)
+        run: uv sync --frozen
+
+      # pre-commit と完全に同一の検査（ruff / mypy strict / pytest）を実行する。
+      - name: Run checks (same as pre-commit)
+        run: uv run pre-commit run --all-files --show-diff-on-failure

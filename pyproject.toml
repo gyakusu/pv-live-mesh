@@ -1,0 +1,75 @@
+[project]
+name = "pv-live-mesh"
+version = "0.1.0"
+description = "ParaView Cube Height Filter plugin"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = ["numpy>=1.24"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.0",
+    "mypy>=1.14.0",
+    "pytest>=8.0.0",
+    "pre-commit>=4.0.0",
+]
+
+[tool.uv]
+# プラグインはパス指定で読み込むため、本リポジトリ自体はパッケージとして
+# ビルド/インストールしない（依存だけを .venv に同期する）。
+package = false
+
+# ---------------------------------------------------------------------------
+# Ruff（lint + format）— GitHub Actions と pre-commit が参照する単一の設定。
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+extend-exclude = ["stubs"]  # ParaView/VTK の型スタブ（vendored）は lint 対象外。
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",  # ruff format と競合
+    "ISC001",  # ruff format と競合
+    "D203",    # D211 と排他（blank-line-before-class を採用）
+    "D213",    # D212 と排他（multi-line-summary-first-line を採用）
+    "RUF001",  # 日本語の全角記号を曖昧文字として誤検出するため
+    "RUF002",
+    "RUF003",
+    "D400",    # 日本語 docstring は「。」で終わる（ASCII ピリオド前提の規則）
+    "D415",    # 同上
+    "D403",    # 英単語混在の日本語 docstring で先頭大文字化を強制しない
+]
+
+[tool.ruff.lint.per-file-ignores]
+# テストでは assert / マジック値 / docstring 強制を緩める。
+"tests/**" = ["S101", "INP001", "D", "PLR2004", "ANN", "TC"]
+# プラグインは ParaView/VTK の API 規約に従う必要がある（PascalCase メソッド、
+# camelCase 引数、パイプライン引数、パス・ブートストラップによる遅延 import）。
+"cube_height_plugin.py" = ["E402", "N802", "N803", "ANN401", "ARG002", "D107"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# ---------------------------------------------------------------------------
+# mypy（strict）
+# ---------------------------------------------------------------------------
+[tool.mypy]
+# 実行中のインタプリタ（CI/ローカルとも .python-version = 3.12）に合わせる。
+# numpy 2.5 の型スタブが PEP 695 構文を使うため 3.12 未満を指定すると解釈できない。
+strict = true
+mypy_path = "stubs"  # paraview / vtkmodules はランタイム専用のため最小スタブで補完。
+files = ["cube_height_core.py", "cube_height_plugin.py", "data", "tests"]
+namespace_packages = true
+explicit_package_bases = true
+warn_unused_configs = true
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q --strict-markers --strict-config"

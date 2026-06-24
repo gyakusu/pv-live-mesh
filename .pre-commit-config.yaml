@@ -1,0 +1,36 @@
+# GitHub Actions と同一の検査をローカルでも実行するための設定。
+# すべて repo: local / language: system とし、ツールのバージョンは
+# pyproject.toml + uv.lock（.venv に同期されたもの）に一本化する。
+# 実行は `uv run pre-commit run --all-files`（CI も同じコマンド）。
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff (lint)
+        entry: ruff check --fix
+        language: system
+        types_or: [python, pyi]
+        exclude: ^stubs/
+        require_serial: true
+
+      - id: ruff-format
+        name: ruff (format)
+        entry: ruff format
+        language: system
+        types_or: [python, pyi]
+        exclude: ^stubs/
+        require_serial: true
+
+      - id: mypy
+        name: mypy (strict)
+        entry: mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        types: [python]
+        pass_filenames: false
